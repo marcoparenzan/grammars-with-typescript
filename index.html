@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Marco Parenzan">
+    <title>PEG</title>
+    <!-- Bootstrap core CSS -->
+    <link href="http:////netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="content/main.css" rel="stylesheet">
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/ie8-responsive-file-warning.js"></script>
+    <![endif]-->
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">PEG</a>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9">
+          <h2>Source</h2>
+          <textarea cols="120" rows="20" id="code" class="code">
+/*
+ * Classic example grammar, which recognizes simple arithmetic expressions like
+ * "2*(3+4)". The parser generated from this grammar then computes their value.
+ */
+
+start
+  = additive
+
+additive
+  = left:multiplicative "+" right:additive { return left + right; }
+  / multiplicative
+
+multiplicative
+  = left:primary "*" right:multiplicative { return left * right; }
+  / primary
+
+primary
+  = integer
+  / "(" additive:additive ")" { return additive; }
+
+integer "integer"
+  = digits:[0-9]+ { return parseInt(digits.join(""), 10); }
+
+letter = [a-z]+
+          </textarea>
+          <a href="#" class="tokenize basic btn btn-primary">Tokenize Basic</a>
+        </div>
+        <div class="col-md-3">
+          <h2>Tokens</h2>
+          <table id="tokens" class="table tokens">
+            <thead><th>l</th><th>value</th><th>id</th></thead>
+            <tbody>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr>
+      <footer>
+        <p>&copy; Marco Parenzan 2014</p>
+      </footer>
+    </div>
+    <!-- /container -->
+    
+    <!-- Bootstrap core JavaScript==================================================- ->
+    <!-- Placed at the end of the document so the pages load faster -->
+   <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="~/scripts/PEGToken.js"></script>
+    <script src="~/scripts/PEGProduction.js"></script>
+    <script src="~/scripts/PEGLexer.js"></script>
+    <script src="~/scripts/PEGParser.js"></script>
+    <script type="text/javascript">
+      $(function(){
+      			
+      			$(".tokenize.basic").click(function(){
+      				var code = $("#code").val();
+              var lexer = new PEGLexer(code);
+              var parser = new PEGParser(lexer);
+              var token = "";
+              var tokens_table = $("#tokens > tbody");
+              while(true)
+              {
+                token = parser.token();
+                if (token == null) break;
+                tokens_table.append("<tr><td class='token name'>[" + token.row + "," + token.col + "]</td><td class='token value'>" +  token.value + "</td><td class='token position'>[" +  token.name + "]</td></tr>");
+              }
+      			});
+      			
+      		});
+    </script>
+  </body>
+
+</html>

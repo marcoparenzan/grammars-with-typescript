@@ -1,0 +1,4 @@
+class PEGProduction
+{
+	name: string;
+}

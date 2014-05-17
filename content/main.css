@@ -1,0 +1,19 @@
+.token.name {
+	color:lightcoral;
+}
+.token.value {
+	color:lightgreen;
+}
+.token.position {
+	color:lightblue;
+}
+
+.code{
+	font-family:monospace;
+	font-size:small;
+}
+
+.tokens{
+	font-family:monospace;
+	font-size:small;
+}
