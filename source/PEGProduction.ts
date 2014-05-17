@@ -1,4 +1,5 @@
 class PEGProduction
 {
-	name: string;
+    name: string;
+    actions: PEGParseAction[];
 }

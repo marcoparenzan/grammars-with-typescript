@@ -49,15 +49,38 @@ class PEGParser {
         var temp: PEGToken[];
 
         // production loop
+        var current_production: PEGProduction = {
+            name: ""
+            , actions: []
+        };
+        var commit_current_production: () => void = () => {
+            // commit current production
+            productions[current_production.name] = current_production;
+            // next production
+            current_production = {
+                name: ""
+                , actions: []
+            };
+        };
         while (true)
         {
             if (!this._can_be(["IDENTIFIER", "EQUALS"])) throw Error("Expected production name");
             temp = this._capture(2);
-            var production_name:string = temp[0].value;
+            current_production.name = temp[0].value;
 
             // production alternatives loop
             var production_empty = true;
-            var current_action: PEGParseAction = {};
+            var current_action: PEGParseAction = {
+                steps: []
+                , javascript: ""
+            };
+            var commit_current_action: () => void = () => {
+                current_production.actions.push(current_action);
+                var current_action: PEGParseAction = {
+                    steps: []
+                    , javascript: ""
+                };
+            };
             while (true)
             {
                 if (this._can_be(["COMMENT"]))
@@ -67,23 +90,43 @@ class PEGParser {
                 }
                 else if (this._can_be(["QUOTE"])) {
                     temp = this._capture(1);
-                    var quote = temp[0].value;
+                    current_action.steps.push({
+                        type: "QUOTE"
+                        , value: temp[0].value
+                    });
 
                     production_empty = false;
                     continue;
                 }
-                else if (this._can_be(["IDENTIFIER", "COLON", "IDENTIFIER"]))
+                else if (this._can_be(["IDENTIFIER"]))
                 {
-                    temp = this._capture(3);
-                    var child_name = temp[0].value;
-                    var selected_production = temp[2].value;
-
-                    production_empty = false;
-                    continue;
-                }
-                else if (this._can_be(["IDENTIFIER"])) {
                     temp = this._capture(1);
-                    var selected_production = temp[0].value;
+                    var current_identifier: PEGIdentifierStep = 
+                    {
+                        type: "IDENTIFIER"
+                        , value: temp[0].value
+                        , identifier_type: "NONE"
+                        , identifier_type_type: "NONE"
+                    };
+
+                    if (this._can_be(["COLON"]))
+                    {
+                        temp = this._capture(1);
+                        if (this._can_be(["IDENTIFIER"])) {
+                            temp = this._capture(1);
+                            current_identifier.identifier_type = temp[0].value;
+                            current_identifier.identifier_type_type = "PRODUCTION";
+                        }
+                        else if (this._can_be(["REGULAREXPRESSION"])) {
+                            temp = this._capture(1);
+                            current_identifier.identifier_type = temp[0].value;
+                            current_identifier.identifier_type_type = "REGULAREXPRESSION";
+                       }
+                        else
+                            throw Error("Typename expected");
+                    }
+                    // else nothing....untyped
+                    current_action.steps.push(current_identifier);
 
                     production_empty = false;
                     continue;
@@ -92,18 +135,25 @@ class PEGParser {
                 if (this._can_be(["JAVASCRIPT"]))
                 {
                     temp = this._capture(1);
-                    var javascript = temp[0].value;
+                    current_action.javascript = temp[0].value;
                 }
 
                 if (this._can_be(["PIPE"])) {
+                    commit_current_action();
                     this._capture(1);
                     continue;
                 }
                 else if (this._can_be(["IDENTIFIER", "EQUALS"])) {
+                    commit_current_action();
+                    if (production_empty)
+                        throw Error("Production is empty");
+                    else {
+                        commit_current_production();
+                        production_empty = true;
+                    }
                     break;
                 }
             }
-            if (production_empty) throw Error("Production is empty");
         }
 
         return productions;
